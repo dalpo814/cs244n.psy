@@ -22,8 +22,9 @@ class Config(object):
     embed_size = 50
     hidden_size = 200
     batch_size = 2048
-    n_epochs = 10
+    n_epochs = 1
     lr = 0.001
+    eval_batch_size = 5
 
 
 class ParserModel(Model):
@@ -59,7 +60,7 @@ class ParserModel(Model):
         self.dropout_placeholder = tf.placeholder(tf.float32, shape=()) # scala placeholder 선언 방법
         ### END YOUR CODE
 
-    def create_feed_dict(self, inputs_batch, labels_batch=None, dropout=1):
+    def create_feed_dict(self, inputs_batch, labels_batch=None, dropout=0.5):
         """Creates the feed_dict for the dependency parser.
 
         A feed_dict takes the form of:
@@ -81,13 +82,13 @@ class ParserModel(Model):
         Returns:
             feed_dict: The feed dictionary mapping from placeholders to values.
         """
-        ### YOUR CODE HERE
+        ### YOUR CODE HERE        
         feed_dict = {self.input_placeholder : inputs_batch, self.dropout_placeholder : dropout}
         if labels_batch is not None:
             feed_dict.update({self.labels_placeholder : labels_batch})         
         ### END YOUR CODE
         return feed_dict
-
+    
     def add_embedding(self):
         """주어진 embedded word vectors를 사용하기 위해서 미리 학습된 embedding들을 사용하는 과정
         Adds an embedding layer that maps from input tokens (integers) to vectors and then
@@ -117,7 +118,7 @@ class ParserModel(Model):
             embeddings: tf.Tensor of shape (None, n_features*embed_size)
         """
         ### YOUR CODE HERE
-        embedding_tensor = tf.Variable(self.pretrained_embeddings)        
+        embedding_tensor = tf.constant(self.pretrained_embeddings, dtype=tf.float32)        
         embedded_words = tf.nn.embedding_lookup(embedding_tensor, self.input_placeholder)
         # 하나의 train_x set에 있는 단어들의 단어 벡터를 이어 붙임      
         embeddings = tf.reshape(embedded_words, [-1, self.config.n_features * self.config.embed_size])
@@ -149,10 +150,11 @@ class ParserModel(Model):
             pred: tf.Tensor of shape (batch_size, n_classes)
         """
 
-        x = self.add_embedding()
+        x = self.add_embedding()        
         ### YOUR CODE HERE
         xavier_initializer = xavier_weight_init()
         W = tf.Variable(xavier_initializer((self.config.n_features * self.config.embed_size, self.config.hidden_size)))
+        
         b1 = tf.Variable(tf.zeros((self.config.hidden_size)))
         U = tf.Variable(xavier_initializer((self.config.hidden_size, self.config.n_classes)))
         b2 = tf.Variable(tf.zeros((self.config.n_classes)))
@@ -219,7 +221,8 @@ class ParserModel(Model):
             prog.update(i + 1, [("train loss", loss)])
 
         print ("\nEvaluating on dev set")
-        dev_UAS, _ = parser.parse(dev_set)
+        ## psy.수정.
+        dev_UAS, _ = parser.parse(dev_set, self.config.eval_batch_size)
         print ("- dev UAS: {:.2f}".format(dev_UAS * 100.0))
         return dev_UAS
 
