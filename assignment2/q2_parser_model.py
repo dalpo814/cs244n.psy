@@ -25,7 +25,7 @@ class Config(object):
     # If debug=False n_epochs=10
     n_epochs = 1
     lr = 0.001
-    # If debug=False eval_batch_size=5000
+    # If debug=False eval_batch_size=50
     eval_batch_size = 5
 
 
