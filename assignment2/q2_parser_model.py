@@ -22,8 +22,10 @@ class Config(object):
     embed_size = 50
     hidden_size = 200
     batch_size = 2048
+    # If debug=False n_epochs=10
     n_epochs = 1
     lr = 0.001
+    # If debug=False eval_batch_size=5000
     eval_batch_size = 5
 
 
