@@ -28,8 +28,8 @@ class PartialParse(object):
         self.buffer = self.sentence
         self.dependencies = []
         
-        self.ROOT = "ROOT"
-        self.stack.append(self.ROOT)
+        ROOT = "ROOT"
+        self.stack.append(ROOT)
         ### END YOUR CODE
 
     def parse_step(self, transition):
@@ -39,12 +39,12 @@ class PartialParse(object):
             transition: A string that equals "S", "LA", or "RA" representing the shift, left-arc,
                         and right-arc transitions.
         """
-        #print(transition)
-        #print(self.stack)
+        
         ### YOUR CODE HERE
         if transition == "S":  # buffer에서 제일 첫번째의 단어를 빼서 stack으로 넘김
-            self.stack.append(self.buffer[0])
-            self.buffer = self.buffer[1:]
+            if(len(self.buffer) >= 1):
+                self.stack.append(self.buffer[0])
+                self.buffer = self.buffer[1:]
         elif transition == "LA": 
             if(len(self.stack) >= 2):
                 self.dependencies.append((self.stack[-1], self.stack[-2])) # (head, dependent)쌍을 dependent배열에 저장            
@@ -103,18 +103,20 @@ def minibatch_parse(sentences, model, batch_size):
     dependencies = []
     for i in range(num_iter):
         start = idx
-        idx += batch_size             
+        idx += batch_size                     
         
-        while(True): 
+        
+               
+        while(True):        
             # Partial_Parse의 미니배치들 중 parsing이 끝나지 않은 것만 뽑아서 parsing function을 적용할 것임        
             # stack에 ROOT만 있으면서 버퍼가 비어 있으면 parsing 작업이 종료된 것으로 생각
             pp_array =[ pp for pp in partial_parses[start:idx] if (len(pp.stack) != 1 or len(pp.buffer)!=0)]             
             # 더 이상 parsing 할 문장이 없으면 종료하고 다음 미니배치 parsing으로 넘어감
-            if len(pp_array) == 0 :
+            if len(pp_array) == 0 :                                
                 break
             # parsing step    
             transitions = model.predict(pp_array)                
-            for pp, transition in zip(pp_array, transitions):                                
+            for pp, transition in zip(pp_array, transitions):                                        
                 pp.parse([transition])
                 
         dependencies += [ pp.dependencies for pp in partial_parses[start:idx]]  # 미니 배치들의 dependencies들을 배열에 저장함    
